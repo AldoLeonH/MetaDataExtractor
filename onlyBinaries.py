@@ -27,14 +27,13 @@ import os
 from pathlib import Path
 import mimetypes
 
-# This function helps to verify the file type
 
-def is_binary(file_path):
+def is_binary(file_path): # This function checks if the current file is an application or not
     mime_type, _ = mimetypes.guess_type(file_path)
     return mime_type and mime_type.startswith('application')
 
 
-def run_powershell_command(path):
+def run_powershell_command(path): #This function runs a powershell command with the application file
 
     powershell_command = f'Get-Command "{path}" | Format-List'
     result = subprocess.run(['powershell', '-Command', powershell_command], capture_output=True, text=True)
@@ -60,10 +59,7 @@ def run_powershell_command(path):
     return '\n'.join(filtered_lines) if not skip_file else ''
 
 
-
-
-
-def process_directory(directory, output_dir, name, version):
+def process_directory(directory, output_dir, name, version): #This function runs the directory to be scanned by this script
     file_count = 0
     extensions = set()
 
@@ -74,12 +70,11 @@ def process_directory(directory, output_dir, name, version):
 
             file_path = os.path.join(root, file)
 
-            if is_binary(file_path):
-                folder_name = os.path.basename(root)
+            if is_binary(file_path): #This line calls is_binary function from line 32
                 output_file_name = f"{name}_{version}_results_binaries_MD.txt"
                 output_file_path = output_dir / output_file_name
 
-                with open(output_file_path, 'a') as output:
+                with open(output_file_path, 'a') as output: #Write the information obtained into the output file
                     output.write(f"Results for: {file_path}\n")
                     output.write(run_powershell_command(file_path))
                     output.write('\n' + '-'*50 + '\n')
@@ -91,7 +86,8 @@ def process_directory(directory, output_dir, name, version):
         output.seek(0, 0)
         output.write(summary + content)
 
-def main():
+def main(): 
+    #These flags are important just for the name of the output file. and the path to be scanned.
     parser = argparse.ArgumentParser(description='Execute PowerShell command on binary files recursively.')
     parser.add_argument('directory', help='Directory containing binary files.')
     parser.add_argument('-p', '--name', required=True, help='Porject_Name')
@@ -99,17 +95,18 @@ def main():
     parser.add_argument('--output', default=None, help='Output folder for results.')
     args = parser.parse_args()
 
-    # if you do not specify the output path the output_dir will be created in the same location of this scrypt and the .txt file inside of that directory. 
+    # if you do not specify the output path the output_dir will be created in the same location of this script and the .txt file inside of that directory. 
     # It will located like this:
     # .|onlyBinaries.py
     #  |-OutputBinariesMetadata (Dir)
     #  | |output_file.txt
     #  |
-    if args.output is None:
-        scrypt_path = Path(__file__).parent
-        output_dir = scrypt_path / "OutputBinariesMetadata"
+
+    if args.output is None: #If the output file is not specified it will be assigned by itself
+        script_path = Path(__file__).parent
+        output_dir = script_path / "OutputBinariesMetadata"
         output_dir.mkdir(exist_ok=True)
-    else:
+    else: #If it is assigned the output will be located due to  your flag input
         output_dir = Path(args.output)
     process_directory(args.directory, output_dir, args.name, args.version)
     
